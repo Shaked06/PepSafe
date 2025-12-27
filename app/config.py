@@ -52,4 +52,9 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings() -> Settings:
     """Get cached settings instance."""
-    return Settings()
+    settings = Settings()
+    if settings.database_url and settings.database_url.startswith("postgresql://"):
+        settings.database_url = settings.database_url.replace(
+            "postgresql://", "postgresql+asyncpg://", 1
+        )
+    return settings
