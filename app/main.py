@@ -13,6 +13,7 @@ from app.api.routes import choke_points, ping, users
 from app.config import get_settings
 from app.db.models import EnrichedPing, RawPing, User
 from app.db.session import init_db, get_session
+from app.middleware.security import APIKeyMiddleware, RateLimitMiddleware
 from app.services.cache import cache_service
 from app.services.weather import weather_service
 
@@ -129,6 +130,14 @@ app = FastAPI(
     description="GPS Ingestion & Enrichment Pipeline with Privacy-First Design",
     version="0.1.0",
     lifespan=lifespan,
+)
+
+# Security middleware (order matters: rate limit first, then auth)
+app.add_middleware(APIKeyMiddleware)
+app.add_middleware(
+    RateLimitMiddleware,
+    requests_per_minute=settings.rate_limit_requests_per_minute,
+    burst=settings.rate_limit_burst,
 )
 
 # Include routers

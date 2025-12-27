@@ -25,8 +25,13 @@ class Settings(BaseSettings):
     openweathermap_api_key: str = ""
     openweathermap_base_url: str = "https://api.openweathermap.org/data/2.5"
 
+    # API Security
+    pepsafe_api_key: str = ""  # Required for /api/v1/ping endpoints
+    api_key_header_name: str = "X-API-KEY"
+
     # Privacy (HARD CONSTRAINT)
     home_zone_radius_meters: float = 50.0
+    home_zone_drop_silently: bool = True  # Drop home zone pings without DB write
 
     # Pepper's home coordinates (for default user setup)
     pepper_home_lat: float | None = None
@@ -35,6 +40,7 @@ class Settings(BaseSettings):
 
     # Rate Limiting
     rate_limit_requests_per_minute: int = 60
+    rate_limit_burst: int = 10  # Allow burst of 10 requests
 
     # Logging
     log_level: str = "INFO"

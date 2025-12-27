@@ -30,12 +30,17 @@ async def process_ping(
     Pipeline order:
     1. Lookup user (create if not exists)
     2. PRIVACY FILTER (Drop-at-Gateway) - runs FIRST before any processing
-    3. Persist raw ping (with nullified coords if home zone)
-    4. If NOT home zone:
+    3. If home zone AND drop_silently enabled: return 200 OK immediately (NO DB write)
+    4. Persist raw ping (with nullified coords if home zone)
+    5. If NOT home zone:
        a. Weather enrichment
        b. Choke point proximity
        c. Sliding window features
        d. Persist enriched ping
+
+    PRIVACY NOTE: When home_zone_drop_silently is enabled (default), home zone
+    pings are immediately discarded with a 200 OK response. No data is persisted
+    to the database, ensuring maximum privacy.
 
     Args:
         request: Validated ping request
@@ -58,7 +63,19 @@ async def process_ping(
         radius_m=settings.home_zone_radius_meters,
     )
 
-    # Step 3: Create raw ping with privacy-filtered data
+    # Step 3: SILENT DROP - If home zone and configured to drop silently
+    # Return 200 OK immediately WITHOUT any database write
+    if privacy_result.is_home_zone and settings.home_zone_drop_silently:
+        # PRIVACY: Log only that a ping was dropped, never any details
+        logger.debug("Ping silently dropped: home_zone")
+        return PingResponse(
+            status="ok",  # Return "ok" so client doesn't retry
+            ping_id=None,  # No ping ID since nothing was stored
+            enrichment_pending=False,
+        )
+
+    # Step 4: Create raw ping with privacy-filtered data
+    # (Only reached if NOT home zone OR drop_silently is disabled)
     raw_ping = RawPing(
         user_id=user.id,
         timestamp=request.timestamp,
@@ -74,9 +91,9 @@ async def process_ping(
     await session.commit()
     await session.refresh(raw_ping)
 
-    # If home zone, return early - NO enrichment for privacy
+    # If home zone (but drop_silently is disabled), return early - NO enrichment
     if privacy_result.is_home_zone:
-        # Safe log: only user and timestamp, NEVER coordinates
+        # Safe log: only user ID, NEVER coordinates
         logger.info(f"Ping filtered: user={user.id}, home_zone=True")
         return PingResponse(
             status="filtered",
@@ -84,10 +101,10 @@ async def process_ping(
             enrichment_pending=False,
         )
 
-    # Step 4: Enrichment (only for non-home-zone pings)
+    # Step 5: Enrichment (only for non-home-zone pings)
     await _enrich_ping(raw_ping, privacy_result, session)
 
-    # Safe log: only user and ping ID
+    # Safe log: only user and ping ID, NEVER coordinates
     logger.info(f"Ping accepted: user={user.id}, ping_id={raw_ping.id}")
 
     return PingResponse(

@@ -11,11 +11,14 @@ This guide explains how to configure OwnTracks on your phone to send GPS data to
 2. **Project Pepper Server Running**
    - Your server URL (e.g., `https://pepper.onrender.com`)
 
+3. **API Key** (Required for security)
+   - Your `PEPSAFE_API_KEY` from your server configuration
+
 ---
 
-## Step 1: Configure HTTP Mode
+## Step 1: Configure HTTP Mode with API Key
 
-OwnTracks supports two modes: MQTT (default) and HTTP. We'll use HTTP mode.
+OwnTracks supports two modes: MQTT (default) and HTTP. We'll use HTTP mode with API key authentication.
 
 ### iOS Setup
 
@@ -31,6 +34,12 @@ OwnTracks supports two modes: MQTT (default) and HTTP. We'll use HTTP mode.
 | **User ID** | `pepper` |
 | **Device ID** | `phone` (or your device name) |
 
+6. **Add API Key Header** (IMPORTANT):
+   - Scroll down to **HTTP Headers** (or **Custom Headers**)
+   - Add a new header:
+     - **Name**: `X-API-KEY`
+     - **Value**: `YOUR_PEPSAFE_API_KEY`
+
 ### Android Setup
 
 1. Open OwnTracks app
@@ -45,6 +54,14 @@ OwnTracks supports two modes: MQTT (default) and HTTP. We'll use HTTP mode.
 | **Host** | `https://YOUR_SERVER/api/v1/ping/owntracks` |
 | **Identification → Username** | `pepper` |
 | **Identification → Device ID** | `phone` |
+
+7. **Add API Key Header** (IMPORTANT):
+   - In Connection settings, find **Headers** or **Custom Headers**
+   - Add:
+     - **Header Name**: `X-API-KEY`
+     - **Header Value**: `YOUR_PEPSAFE_API_KEY`
+
+> **Security Note**: Without the correct API key, your requests will be rejected with a 401 Unauthorized error.
 
 ---
 
@@ -181,7 +198,9 @@ Task: Send GPS to Pepper
   1. HTTP Request
      Method: POST
      URL: https://YOUR_SERVER/api/v1/ping
-     Headers: Content-Type: application/json
+     Headers:
+       Content-Type: application/json
+       X-API-KEY: YOUR_PEPSAFE_API_KEY
      Body: {
        "user": "pepper",
        "lat": %LOCN_LAT,
@@ -194,6 +213,8 @@ Task: Send GPS to Pepper
 ```
 
 Trigger: Every 5 seconds when GPS is active
+
+> **Important**: Replace `YOUR_PEPSAFE_API_KEY` with your actual API key. Store it as a Tasker variable for security.
 
 ---
 

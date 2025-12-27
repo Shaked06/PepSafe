@@ -1,4 +1,4 @@
-"""Integration tests for /ping endpoint."""
+"""Integration tests for /api/v1/ping endpoint."""
 
 import uuid
 
@@ -11,13 +11,13 @@ def unique_user() -> str:
 
 
 class TestPingEndpoint:
-    """Tests for /ping POST endpoint."""
+    """Tests for /api/v1/ping POST endpoint."""
 
     @pytest.mark.anyio
     async def test_valid_ping_accepted(self, client):
         """Valid ping should be accepted."""
         response = await client.post(
-            "/ping",
+            "/api/v1/ping",
             json={
                 "user": unique_user(),
                 "lat": 32.0853,
@@ -29,14 +29,14 @@ class TestPingEndpoint:
 
         assert response.status_code == 200
         data = response.json()
-        assert data["status"] in ("accepted", "filtered")
+        assert data["status"] in ("accepted", "filtered", "ok")
         assert "ping_id" in data
 
     @pytest.mark.anyio
     async def test_minimal_ping_accepted(self, client):
         """Ping with only required fields should be accepted."""
         response = await client.post(
-            "/ping",
+            "/api/v1/ping",
             json={
                 "user": unique_user(),
                 "lat": 32.0853,
@@ -50,7 +50,7 @@ class TestPingEndpoint:
     async def test_invalid_latitude_rejected(self, client):
         """Latitude outside valid range should be rejected."""
         response = await client.post(
-            "/ping",
+            "/api/v1/ping",
             json={
                 "user": "test_user",
                 "lat": 91.0,  # Invalid: > 90
@@ -64,7 +64,7 @@ class TestPingEndpoint:
     async def test_invalid_longitude_rejected(self, client):
         """Longitude outside valid range should be rejected."""
         response = await client.post(
-            "/ping",
+            "/api/v1/ping",
             json={
                 "user": "test_user",
                 "lat": 32.0853,
@@ -78,7 +78,7 @@ class TestPingEndpoint:
     async def test_invalid_bearing_rejected(self, client):
         """Bearing outside valid range should be rejected."""
         response = await client.post(
-            "/ping",
+            "/api/v1/ping",
             json={
                 "user": "test_user",
                 "lat": 32.0853,
@@ -93,7 +93,7 @@ class TestPingEndpoint:
     async def test_negative_speed_rejected(self, client):
         """Negative speed should be rejected."""
         response = await client.post(
-            "/ping",
+            "/api/v1/ping",
             json={
                 "user": "test_user",
                 "lat": 32.0853,
@@ -108,7 +108,7 @@ class TestPingEndpoint:
     async def test_missing_user_rejected(self, client):
         """Missing user field should be rejected."""
         response = await client.post(
-            "/ping",
+            "/api/v1/ping",
             json={
                 "lat": 32.0853,
                 "lon": 34.7818,
@@ -121,7 +121,7 @@ class TestPingEndpoint:
     async def test_empty_user_rejected(self, client):
         """Empty user string should be rejected."""
         response = await client.post(
-            "/ping",
+            "/api/v1/ping",
             json={
                 "user": "",
                 "lat": 32.0853,
@@ -135,7 +135,7 @@ class TestPingEndpoint:
     async def test_custom_timestamp_accepted(self, client):
         """Custom timestamp should be accepted."""
         response = await client.post(
-            "/ping",
+            "/api/v1/ping",
             json={
                 "user": unique_user(),
                 "lat": 32.0853,
@@ -162,13 +162,13 @@ class TestHealthEndpoint:
 
 
 class TestChokePointsEndpoint:
-    """Tests for /choke-points endpoints."""
+    """Tests for /api/v1/choke-points endpoints."""
 
     @pytest.mark.anyio
     async def test_create_choke_point(self, client):
         """Should create a new choke point."""
         response = await client.post(
-            "/choke-points",
+            "/api/v1/choke-points",
             json={
                 "name": "Test Point",
                 "lat": 32.0853,
@@ -186,7 +186,7 @@ class TestChokePointsEndpoint:
     @pytest.mark.anyio
     async def test_list_choke_points(self, client):
         """Should list all choke points."""
-        response = await client.get("/choke-points")
+        response = await client.get("/api/v1/choke-points")
 
         assert response.status_code == 200
         assert isinstance(response.json(), list)
@@ -194,6 +194,6 @@ class TestChokePointsEndpoint:
     @pytest.mark.anyio
     async def test_delete_nonexistent_choke_point(self, client):
         """Should return 404 for nonexistent choke point."""
-        response = await client.delete("/choke-points/99999")
+        response = await client.delete("/api/v1/choke-points/99999")
 
         assert response.status_code == 404
