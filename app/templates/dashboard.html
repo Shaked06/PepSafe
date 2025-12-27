@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#1f2937">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>{{ data.pet_name }} - Family Dashboard</title>
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Lucide Icons CDN -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        /* Custom animations */
+        @keyframes pulse-slow {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        .animate-pulse-slow {
+            animation: pulse-slow 2s ease-in-out infinite;
+        }
+
+        /* Disconnected overlay */
+        .disconnected-overlay {
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(2px);
+        }
+
+        /* Status card glow effect */
+        .status-glow-low {
+            box-shadow: 0 0 20px rgba(34, 197, 94, 0.3);
+        }
+        .status-glow-moderate {
+            box-shadow: 0 0 20px rgba(234, 179, 8, 0.3);
+        }
+        .status-glow-high {
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white min-h-screen">
+    <div id="app" class="max-w-md mx-auto px-4 py-6 relative">
+
+        <!-- Disconnected/Stale Overlay -->
+        {% if data.status == 'disconnected' %}
+        <div class="disconnected-overlay fixed inset-0 z-50 flex items-center justify-center">
+            <div class="bg-gray-800 rounded-2xl p-6 mx-4 text-center border border-red-500/50">
+                <i data-lucide="wifi-off" class="w-16 h-16 mx-auto text-red-500 mb-4"></i>
+                <h2 class="text-xl font-bold text-red-400 mb-2">{{ data.pet_name }} is Offline</h2>
+                <p class="text-gray-400 mb-4">
+                    Last seen {{ data.freshness.display if data.freshness else 'unknown' }}
+                </p>
+                <p class="text-sm text-gray-500">
+                    Data may be outdated. Check {{ data.pet_name }}'s GPS device.
+                </p>
+                <button onclick="location.reload()" class="mt-4 px-6 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm transition-colors">
+                    <i data-lucide="refresh-cw" class="w-4 h-4 inline mr-2"></i>
+                    Refresh
+                </button>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Stale Warning Banner -->
+        {% if data.status == 'stale' %}
+        <div class="bg-yellow-500/20 border border-yellow-500/50 rounded-xl p-3 mb-4 flex items-center gap-3">
+            <i data-lucide="alert-triangle" class="w-5 h-5 text-yellow-500 flex-shrink-0"></i>
+            <span class="text-sm text-yellow-200">
+                Data may be outdated ({{ data.freshness.display if data.freshness else 'unknown' }})
+            </span>
+        </div>
+        {% endif %}
+
+        <!-- Header -->
+        <header class="flex items-center justify-between mb-6">
+            <div>
+                <h1 class="text-2xl font-bold">{{ data.pet_name }}</h1>
+                <p class="text-gray-400 text-sm">Family Dashboard</p>
+            </div>
+            <div class="flex items-center gap-2">
+                <!-- Freshness indicator -->
+                {% if data.freshness %}
+                <div class="flex items-center gap-1.5 text-sm {% if data.freshness.is_stale %}text-yellow-400{% else %}text-green-400{% endif %}">
+                    <span class="w-2 h-2 rounded-full {% if data.freshness.is_stale %}bg-yellow-400{% else %}bg-green-400 animate-pulse{% endif %}"></span>
+                    <span>{{ data.freshness.display }}</span>
+                </div>
+                {% endif %}
+            </div>
+        </header>
+
+        {% if data.status == 'no_data' %}
+        <!-- No Data State -->
+        <div class="bg-gray-800 rounded-2xl p-8 text-center">
+            <i data-lucide="dog" class="w-16 h-16 mx-auto text-gray-600 mb-4"></i>
+            <h2 class="text-xl font-semibold text-gray-300 mb-2">No Walk Data Yet</h2>
+            <p class="text-gray-500">{{ data.pet_name }}'s location will appear here during walks.</p>
+        </div>
+        {% else %}
+
+        <!-- Main Risk Status Card -->
+        <div class="rounded-2xl p-6 mb-4 transition-all duration-500
+            {% if data.risk.level == 'low' %}bg-green-500/20 border border-green-500/30 status-glow-low{% endif %}
+            {% if data.risk.level == 'moderate' %}bg-yellow-500/20 border border-yellow-500/30 status-glow-moderate{% endif %}
+            {% if data.risk.level == 'high' %}bg-red-500/20 border border-red-500/30 status-glow-high animate-pulse-slow{% endif %}
+        ">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-3">
+                    <!-- Status Icon -->
+                    {% if data.risk.level == 'low' %}
+                    <div class="w-12 h-12 rounded-full bg-green-500/30 flex items-center justify-center">
+                        <i data-lucide="check-circle" class="w-7 h-7 text-green-400"></i>
+                    </div>
+                    {% elif data.risk.level == 'moderate' %}
+                    <div class="w-12 h-12 rounded-full bg-yellow-500/30 flex items-center justify-center">
+                        <i data-lucide="alert-circle" class="w-7 h-7 text-yellow-400"></i>
+                    </div>
+                    {% else %}
+                    <div class="w-12 h-12 rounded-full bg-red-500/30 flex items-center justify-center">
+                        <i data-lucide="alert-octagon" class="w-7 h-7 text-red-400"></i>
+                    </div>
+                    {% endif %}
+
+                    <div>
+                        <h2 class="text-xl font-bold
+                            {% if data.risk.level == 'low' %}text-green-400{% endif %}
+                            {% if data.risk.level == 'moderate' %}text-yellow-400{% endif %}
+                            {% if data.risk.level == 'high' %}text-red-400{% endif %}
+                        ">
+                            {% if data.risk.level == 'low' %}{{ data.pet_name }} is Safe{% endif %}
+                            {% if data.risk.level == 'moderate' %}Stay Alert{% endif %}
+                            {% if data.risk.level == 'high' %}High Alert{% endif %}
+                        </h2>
+                        <p class="text-sm text-gray-400">Risk Score: {{ data.risk.score|int }}/100</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Risk Bar -->
+            <div class="w-full h-2 bg-gray-700 rounded-full overflow-hidden">
+                <div class="h-full rounded-full transition-all duration-500
+                    {% if data.risk.level == 'low' %}bg-green-500{% endif %}
+                    {% if data.risk.level == 'moderate' %}bg-yellow-500{% endif %}
+                    {% if data.risk.level == 'high' %}bg-red-500{% endif %}
+                " style="width: {{ data.risk.score }}%"></div>
+            </div>
+        </div>
+
+        <!-- Activity & Environment Cards (2-column grid) -->
+        <div class="grid grid-cols-2 gap-3 mb-4">
+            <!-- Activity Card -->
+            <div class="bg-gray-800 rounded-xl p-4">
+                <div class="flex items-center gap-2 mb-3">
+                    <i data-lucide="activity" class="w-4 h-4 text-blue-400"></i>
+                    <span class="text-xs text-gray-400 uppercase tracking-wide">Activity</span>
+                </div>
+                <p class="text-lg font-semibold text-white mb-1">{{ data.activity.label }}</p>
+                <p class="text-sm text-gray-400">
+                    {% if data.activity.is_stopped and data.activity.stop_duration %}
+                        Stopped for {{ data.activity.stop_duration }}s
+                    {% elif data.activity.movement == 'steady' %}
+                        Steady pace
+                    {% elif data.activity.movement == 'active' %}
+                        Moving around
+                    {% elif data.activity.movement == 'playing' %}
+                        Very active
+                    {% elif data.activity.movement == 'erratic' %}
+                        Erratic movement
+                    {% else %}
+                        On the move
+                    {% endif %}
+                </p>
+            </div>
+
+            <!-- Environment Card -->
+            <div class="bg-gray-800 rounded-xl p-4">
+                <div class="flex items-center gap-2 mb-3">
+                    <i data-lucide="users" class="w-4 h-4 text-purple-400"></i>
+                    <span class="text-xs text-gray-400 uppercase tracking-wide">Environment</span>
+                </div>
+                <p class="text-lg font-semibold text-white mb-1">
+                    {% if data.environment.crowding == 'quiet' %}Quiet Area{% endif %}
+                    {% if data.environment.crowding == 'moderate' %}Some Activity{% endif %}
+                    {% if data.environment.crowding == 'busy' %}Crowded{% endif %}
+                </p>
+                <p class="text-sm text-gray-400">
+                    {% if data.environment.weather %}
+                        {{ data.environment.weather }}
+                    {% elif data.environment.busyness_pct %}
+                        {{ data.environment.busyness_pct|int }}% busy
+                    {% else %}
+                        Normal conditions
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+
+        <!-- Why This Status Section -->
+        <div class="bg-gray-800 rounded-xl p-4 mb-4">
+            <div class="flex items-center gap-2 mb-3">
+                <i data-lucide="message-circle" class="w-4 h-4 text-cyan-400"></i>
+                <span class="text-xs text-gray-400 uppercase tracking-wide">Why This Status?</span>
+            </div>
+            <ul class="space-y-2">
+                {% for explanation in data.explanations %}
+                <li class="flex items-start gap-2 text-sm text-gray-300">
+                    <span class="text-cyan-400 mt-1">-</span>
+                    <span>{{ explanation }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <!-- Find Pepper Button -->
+        {% if data.location and data.location.is_available %}
+        <a href="{{ data.location.maps_url }}"
+           target="_blank"
+           rel="noopener noreferrer"
+           class="block w-full bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-semibold py-4 px-6 rounded-xl text-center transition-colors">
+            <i data-lucide="map-pin" class="w-5 h-5 inline mr-2"></i>
+            Find {{ data.pet_name }} on Map
+        </a>
+        {% else %}
+        <button disabled
+                class="block w-full bg-gray-700 text-gray-500 font-semibold py-4 px-6 rounded-xl text-center cursor-not-allowed">
+            <i data-lucide="map-pin-off" class="w-5 h-5 inline mr-2"></i>
+            Location Unavailable
+        </button>
+        {% endif %}
+
+        {% endif %}
+
+        <!-- Footer -->
+        <footer class="mt-6 text-center text-xs text-gray-600">
+            <p>PepSafe Family Dashboard</p>
+            <p class="mt-1">Auto-refreshes every 15 seconds</p>
+        </footer>
+    </div>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // Auto-refresh every 15 seconds
+        const REFRESH_INTERVAL = 15000;
+
+        async function refreshDashboard() {
+            try {
+                const response = await fetch('/dashboard/api/pepper');
+                if (response.ok) {
+                    // Reload the page to update server-rendered content
+                    location.reload();
+                }
+            } catch (error) {
+                console.log('Refresh failed, will retry...');
+            }
+        }
+
+        // Only auto-refresh if not disconnected (to avoid constant reloads)
+        const status = '{{ data.status }}';
+        if (status !== 'disconnected') {
+            setInterval(refreshDashboard, REFRESH_INTERVAL);
+        }
+
+        // Update freshness display more frequently
+        let minutesAgo = {{ data.freshness.minutes_ago if data.freshness else 0 }};
+
+        function updateFreshnessDisplay() {
+            minutesAgo += 1/60; // Add 1 second
+
+            let display;
+            if (minutesAgo < 1) {
+                const seconds = Math.floor(minutesAgo * 60);
+                display = seconds < 5 ? 'Just now' : `${seconds} seconds ago`;
+            } else if (minutesAgo < 60) {
+                const mins = Math.floor(minutesAgo);
+                display = `${mins} minute${mins !== 1 ? 's' : ''} ago`;
+            } else {
+                const hours = Math.floor(minutesAgo / 60);
+                display = `${hours} hour${hours !== 1 ? 's' : ''} ago`;
+            }
+
+            // Update the freshness text
+            const freshnessEl = document.querySelector('[data-freshness]');
+            if (freshnessEl) {
+                freshnessEl.textContent = display;
+            }
+        }
+
+        // Update freshness every second
+        setInterval(updateFreshnessDisplay, 1000);
+    </script>
+</body>
+</html>

@@ -6,7 +6,7 @@ CRITICAL FOR RENDER DEPLOYMENT:
 - All heavy initialization is done lazily on first request
 """
 
-from app.api.routes import choke_points, ping, users
+from app.api.routes import choke_points, dashboard, ping, users
 from app.middleware.security import APIKeyMiddleware, RateLimitMiddleware
 from app.config import get_settings
 import asyncio
@@ -173,6 +173,7 @@ app.add_middleware(
 app.include_router(ping.router)
 app.include_router(choke_points.router)
 app.include_router(users.router)
+app.include_router(dashboard.router)
 
 
 # =============================================================================
