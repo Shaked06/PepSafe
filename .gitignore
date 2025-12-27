@@ -1,0 +1,248 @@
+# ============================================
+# Project Pepper - Git Ignore
+# ============================================
+
+# ============================================
+# SENSITIVE FILES - NEVER COMMIT
+# ============================================
+
+# Environment variables (contain secrets!)
+.env
+.env.local
+.env.*.local
+.env.production
+.env.development
+
+# Keep templates for reference
+!.env.example
+!.env.template
+
+# Database files (may contain PII/GPS data)
+*.db
+*.sqlite
+*.sqlite3
+pepper.db
+test_pepper.db
+
+# Credentials and keys
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+credentials.json
+secrets.json
+service-account*.json
+
+# API keys file
+api_keys.txt
+api_keys.json
+
+# ============================================
+# PYTHON
+# ============================================
+
+# Virtual environments
+venv/
+.venv/
+env/
+.env/
+ENV/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Distribution / packaging
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+pytest_cache/
+
+# Mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Ruff
+.ruff_cache/
+
+# ============================================
+# IDE / EDITOR
+# ============================================
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# PyCharm / IntelliJ
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*.swp
+*.swo
+*~
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+
+# ============================================
+# OS GENERATED
+# ============================================
+
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+.AppleDouble
+.LSOverride
+Icon
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# Linux
+*~
+
+# ============================================
+# DOCKER
+# ============================================
+
+# Docker override files (may contain local secrets)
+docker-compose.override.yml
+docker-compose.local.yml
+.docker/
+
+# ============================================
+# DATA / EXPORTS
+# ============================================
+
+# Exported data files (may contain GPS/PII)
+*.parquet
+*.csv
+!requirements*.txt
+
+# Data directories
+data/
+exports/
+output/
+
+# Simulation output (keep script, not data)
+simulations/*.png
+simulations/*.csv
+simulations/*.txt
+simulations/*.parquet
+!simulations/*.py
+
+# ============================================
+# LOGS
+# ============================================
+
+*.log
+logs/
+log/
+
+# ============================================
+# ML / MODELS
+# ============================================
+
+# Trained models (may contain learned patterns from PII)
+*.pkl
+*.pickle
+*.joblib
+*.h5
+*.hdf5
+*.onnx
+models/
+checkpoints/
+
+# XGBoost models
+*.xgb
+*.model
+
+# ============================================
+# JUPYTER
+# ============================================
+
+.ipynb_checkpoints/
+*.ipynb
+
+# ============================================
+# TEMPORARY FILES
+# ============================================
+
+tmp/
+temp/
+*.tmp
+*.temp
+*.bak
+*.backup
+
+# ============================================
+# MISC
+# ============================================
+
+# Node (if any frontend)
+node_modules/
+
+# Redis dump
+dump.rdb
+
+# Postgres data (local docker)
+pgdata/
+postgres-data/

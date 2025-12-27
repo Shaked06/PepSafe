@@ -1,0 +1,103 @@
+version: '3.8'
+
+services:
+  # ============================================
+  # FastAPI Application
+  # ============================================
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pepper-api
+    ports:
+      - "8000:8000"
+    environment:
+      # Database (PostgreSQL)
+      - DATABASE_URL=postgresql+asyncpg://pepper:pepper_secret@db:5432/pepper_db
+      # Redis Cache
+      - REDIS_URL=redis://redis:6379
+      - REDIS_WEATHER_TTL_SECONDS=600
+      # OpenWeatherMap (set in .env or secrets)
+      - OPENWEATHERMAP_API_KEY=${OPENWEATHERMAP_API_KEY:-}
+      - OPENWEATHERMAP_BASE_URL=https://api.openweathermap.org/data/2.5
+      # Privacy Settings
+      - HOME_ZONE_RADIUS_METERS=50
+      # Logging
+      - LOG_LEVEL=INFO
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - pepper-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # ============================================
+  # PostgreSQL Database
+  # ============================================
+  db:
+    image: postgres:16-alpine
+    container_name: pepper-db
+    environment:
+      - POSTGRES_USER=pepper
+      - POSTGRES_PASSWORD=pepper_secret
+      - POSTGRES_DB=pepper_db
+    volumes:
+      - pepper-db-data:/var/lib/postgresql/data
+      # Optional: init scripts
+      - ./scripts/init-db:/docker-entrypoint-initdb.d:ro
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    networks:
+      - pepper-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pepper -d pepper_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ============================================
+  # Redis Cache
+  # ============================================
+  redis:
+    image: redis:7-alpine
+    container_name: pepper-redis
+    command: redis-server --appendonly yes --maxmemory 128mb --maxmemory-policy allkeys-lru
+    volumes:
+      - pepper-redis-data:/data
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    networks:
+      - pepper-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+# ============================================
+# Networks
+# ============================================
+networks:
+  pepper-network:
+    driver: bridge
+
+# ============================================
+# Volumes (Persistent Storage)
+# ============================================
+volumes:
+  pepper-db-data:
+    driver: local
+  pepper-redis-data:
+    driver: local
