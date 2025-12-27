@@ -6,6 +6,9 @@ CRITICAL FOR RENDER DEPLOYMENT:
 - All heavy initialization is done lazily on first request
 """
 
+from app.api.routes import choke_points, ping, users
+from app.middleware.security import APIKeyMiddleware, RateLimitMiddleware
+from app.config import get_settings
 import asyncio
 import logging
 import os
@@ -15,7 +18,8 @@ from typing import Optional
 
 from fastapi import FastAPI, Depends, Request
 from sqlmodel import select
-from sqlmodel.ext.asyncio.session import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.db.session import get_session
 
 # =============================================================================
 # IMMEDIATE STARTUP - Print port binding message FIRST
@@ -37,6 +41,8 @@ app = FastAPI(
 # =============================================================================
 # HEALTH CHECK - MUST BE FIRST, RESPONDS INSTANTLY
 # =============================================================================
+
+
 @app.get("/health")
 async def health_check() -> dict:
     """Instant health check for Render port scanning. No dependencies."""
@@ -124,7 +130,8 @@ async def _setup_default_user(session: AsyncSession, settings) -> None:
         )
         session.add(user)
         await session.commit()
-        print(f"  ✓ Created default user: {settings.pepper_user_id}", flush=True)
+        print(
+            f"  ✓ Created default user: {settings.pepper_user_id}", flush=True)
 
 
 # =============================================================================
@@ -145,7 +152,6 @@ async def lazy_init_middleware(request: Request, call_next):
 # =============================================================================
 # DEFERRED IMPORTS AND SETUP - Only after app is created
 # =============================================================================
-from app.config import get_settings
 settings = get_settings()
 
 # Configure logging
@@ -156,7 +162,6 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Security middleware
-from app.middleware.security import APIKeyMiddleware, RateLimitMiddleware
 app.add_middleware(APIKeyMiddleware)
 app.add_middleware(
     RateLimitMiddleware,
@@ -165,7 +170,6 @@ app.add_middleware(
 )
 
 # Include routers
-from app.api.routes import choke_points, ping, users
 app.include_router(ping.router)
 app.include_router(choke_points.router)
 app.include_router(users.router)
@@ -290,8 +294,5 @@ def _compute_risk_score(enriched) -> float:
 
     return min(100, max(0, round(risk, 1)))
 
-
-# Import for type hints in health/pepper endpoint
-from app.db.session import get_session
 
 print(f"✅ App created, ready to accept connections on port {PORT}", flush=True)
