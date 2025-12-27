@@ -45,8 +45,8 @@ class Settings(BaseSettings):
     # Logging
     log_level: str = "INFO"
 
-    # Server
-    port: int = 8000
+    # Server - Render injects PORT dynamically
+    port: int = 10000  # Default for Render, overridden by $PORT env var
 
 
 @lru_cache

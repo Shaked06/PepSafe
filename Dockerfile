@@ -61,12 +61,13 @@ COPY --chown=pepper:pepper export/ ./export/
 # Switch to non-root user
 USER pepper
 
-# Expose port
-EXPOSE 8000
+# Expose port (Render injects $PORT dynamically, default 10000)
+EXPOSE 10000
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8000/health || exit 1
+# Health check - uses shell to expand $PORT variable
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost:${PORT:-10000}/health || exit 1
 
-# Run the application
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "10000", "--workers", "2"]
+# Run application - shell form required for $PORT expansion
+CMD uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-10000} --workers 2
+

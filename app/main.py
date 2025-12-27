@@ -149,15 +149,33 @@ app.include_router(users.router)
 @app.get("/health")
 async def health_check() -> dict:
     """
-    Health check endpoint with latest risk status.
+    Lightweight health check for Render port scanning.
+
+    IMPORTANT: This endpoint must respond immediately without
+    waiting for DB, Redis, or any external services.
+    Render uses this to verify the port is open.
 
     Returns:
-    - status: API health status
-    - cache_available: Redis connection status
-    - pepper: Latest walk data for Pepper (if available)
+    - status: Always "healthy" if the app is running
+    - version: App version
     """
+    # CRITICAL: No async calls, no DB checks, no cache checks
+    # This must return immediately for Render's port scan
     return {
         "status": "healthy",
+        "version": "0.1.0",
+    }
+
+
+@app.get("/health/ready")
+async def readiness_check() -> dict:
+    """
+    Full readiness check including DB and cache status.
+
+    Use this endpoint for detailed health monitoring after deployment.
+    """
+    return {
+        "status": "ready",
         "cache_available": cache_service.is_available,
         "version": "0.1.0",
     }
