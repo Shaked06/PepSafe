@@ -69,5 +69,6 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
     CMD curl -f http://localhost:${PORT:-10000}/health || exit 1
 
 # Run application - shell form required for $PORT expansion
-CMD uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-10000} --workers 2
+# Single worker for faster startup on Render free tier
+CMD uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-10000} --workers 1
 
